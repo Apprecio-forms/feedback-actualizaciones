@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encuesta de Nuevas Funcionalidades</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root { --primary-color: #ff3366; --text-dark: #1e293b; --bg-soft: #f1f5f9; }
+  
+  body { 
+    font-family: 'Poppins', sans-serif; 
+    background-color: var(--bg-soft); 
+    display: flex; 
+    justify-content: center; 
+    align-items: flex-start;
+    padding: 40px 0; 
+    margin: 0; 
+  }
+  
+  .survey-card { 
+    background: white; 
+    padding: 40px; 
+    border-radius: 8px; 
+    box-shadow: 6px 6px 0px 0px rgba(0, 0, 0, 1); 
+    border: 1px solid #000; 
+    max-width: 600px; 
+    width: 90%;
+    box-sizing: border-box;
+  }
+
+  .header { text-align: center; margin-bottom: 30px; }
+  .header img { max-width: 200px; height: auto; margin-bottom: 15px; display: block; margin-left: auto; margin-right: auto; }
+
+  .func-section {
+    border-bottom: 1px dashed #cbd5e1;
+    padding-bottom: 25px;
+    margin-bottom: 30px;
+  }
+  .func-section:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+    margin-bottom: 10px;
+  }
+
+  .func-tag {
+    display: inline-block;
+    background: #fef2f2;
+    color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 4px;
+    margin-bottom: 14px;
+  }
+
+  .question-block { margin-bottom: 25px; text-align: left; }
+  .question-title { font-weight: 600; font-size: 15px; margin-bottom: 10px; display: block; color: var(--text-dark); }
+  
+  .scale-container { display: flex; justify-content: space-between; gap: 4px; }
+  .scale-btn { 
+    flex: 1; padding: 12px 0; border: 1px solid #ccc; background: white; 
+    cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s;
+    font-family: inherit;
+  }
+  .scale-btn:hover { background: #fef2f2; border-color: var(--primary-color); }
+  .scale-btn.selected { background: var(--primary-color); color: white; border-color: var(--primary-color); }
+
+  .scale-labels { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: #64748b; font-weight: 400; }
+
+  textarea { 
+    width: 100%; 
+    padding: 12px; 
+    border: 1px solid #ccc; 
+    border-radius: 4px; 
+    font-family: inherit; 
+    font-size: 14px;
+    margin-top: 6px; 
+    box-sizing: border-box;
+    min-height: 85px;
+    resize: vertical;
+  }
+  textarea:focus { outline: none; border-color: var(--primary-color); }
+
+  .submit-btn { 
+    background: var(--primary-color); 
+    color: white; 
+    border: none; 
+    padding: 16px; 
+    border-radius: 4px; 
+    width: 100%; 
+    font-weight: 600; 
+    cursor: pointer; 
+    margin-top: 20px; 
+    font-size: 16px;
+    display: block;
+    font-family: inherit;
+  }
+  .submit-btn:hover { opacity: 0.9; }
+  .submit-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+
+  .error-message {
+    color: #ff3366;
+    font-size: 12px;
+    margin-top: 8px;
+    display: none; 
+    font-weight: bold;
+    text-align: left;
+  }
+
+  #success-msg, #error-link-msg { display: none; text-align: center; padding: 40px 20px; }
+</style>
+</head>
+<body>
+
+<div class="survey-card" id="main-card">
+  <div class="header">
+    <img id="img-logo" src="" alt="Logo Empresa">
+    <p id="intro-text" style="font-size: 14px; color: #64748b; line-height: 1.5;">
+      Tu opinión es clave para nosotros. Por favor, tómate un minuto para evaluar las nuevas funcionalidades activadas en tu plataforma.
+    </p>
+  </div>
+
+  <!-- AQUÍ SE GENERAN DINÁMICAMENTE LAS PREGUNTAS (2 POR CADA FUNCIONALIDAD) -->
+  <div id="dynamic-questions-container"></div>
+
+  <button type="button" class="submit-btn" id="btn-envio">Enviar Encuesta</button>
+</div>
+
+<div class="survey-card" id="success-msg">
+  <h2 style="color: var(--primary-color);">✅ ¡Muchas gracias!</h2>
+  <p style="font-size: 14px; color: #64748b;">Tus respuestas han sido recibidas exitosamente y nos ayudan a seguir mejorando.</p>
+</div>
+
+<div class="survey-card" id="error-link-msg">
+  <h2 style="color: var(--primary-color);">⚠️ Enlace inválido</h2>
+  <p style="font-size: 14px; color: #64748b;">Por favor accede utilizando el enlace enviado directamente a tu correo electrónico.</p>
+</div>
+
+<script>
+// ⚠️ PEGA AQUÍ LA URL DE TU APPS SCRIPT (LA QUE TERMINA EN /exec)
+var SCRIPT_URL = "PEGA_AQUI_TU_URL_DE_APPS_SCRIPT_EXEC";
+
+// CONFIGURACIÓN DE LOGOS POR PAÍS
+var LOGO_MEXICO = "https://lh3.googleusercontent.com/d/1q8BvfZf_gvE7Z7j5JZA2bMzxtxG7vsYG";
+var LOGO_OTROS  = "https://lh3.googleusercontent.com/d/1Bdr6iTq7ZnhCxUD6BGBqTsxAd7DpXdFo";
+
+var urlParams = new URLSearchParams(window.location.search);
+var token = urlParams.get('data') || '';
+var payload = null;
+var respuestasScore = {}; // Guarda { 0: 9, 1: 10 }
+
+function decodificarBase64Url(str) {
+  var base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) base64 += '=';
+  var binString = atob(base64);
+  var bytes = Uint8Array.from(binString, function(m) { return m.codePointAt(0); });
+  return new TextDecoder().decode(bytes);
+}
+
+// INICIALIZAR ENCUESTA
+if (!token) {
+  document.getElementById('main-card').style.display = 'none';
+  document.getElementById('error-link-msg').style.display = 'block';
+} else {
+  try {
+    payload = JSON.parse(decodificarBase64Url(token));
+
+    // 1. LOGO SEGÚN PAÍS
+    var paisUser = (payload.pais || '').toLowerCase().trim();
+    var imgLogo = document.getElementById('img-logo');
+    if (paisUser === 'mexico' || paisUser === 'méxico' || paisUser === 'mx') {
+      imgLogo.src = LOGO_MEXICO;
+    } else {
+      imgLogo.src = LOGO_OTROS;
+    }
+
+    // 2. SALUDO PERSONALIZADO
+    if (payload.cliente) {
+      document.getElementById('intro-text').innerHTML = 
+        'Hola equipo de <strong>' + payload.cliente + '</strong>, tu opinión es clave para nosotros. Por favor, tómate un minuto para calificar las nuevas funcionalidades activadas en tu plataforma.';
+    }
+
+    // 3. GENERAR BLOQUES DINÁMICOS (2 PREGUNTAS POR FUNCIONALIDAD)
+    var contenedor = document.getElementById('dynamic-questions-container');
+    var numPregunta = 1;
+
+    payload.items.forEach(function(item, idx) {
+      var section = document.createElement('div');
+      section.className = 'func-section';
+
+      // Generar botones 1 al 10
+      var botonesHtml = '';
+      for (var n = 1; n <= 10; n++) {
+        botonesHtml += '<button type="button" class="scale-btn" data-idx="' + idx + '" data-valor="' + n + '">' + n + '</button>';
+      }
+
+      section.innerHTML = 
+        '<span class="func-tag">Funcionalidad: ' + item.f + '</span>' +
+        
+        // PREGUNTA DE ESCALA (1-10)
+        '<div class="question-block q-scale-block" data-idx="' + idx + '">' +
+          '<span class="question-title">' + numPregunta + '. ' + item.e + '</span>' +
+          '<div class="scale-container">' + botonesHtml + '</div>' +
+          '<div class="scale-labels"><span>Nada satisfecho</span><span>Muy satisfecho</span></div>' +
+          '<div class="error-message">⚠️ Por favor, selecciona una calificación.</div>' +
+        '</div>' +
+
+        // PREGUNTA ABIERTA OBLIGATORIA
+        '<div class="question-block q-open-block" data-idx="' + idx + '">' +
+          '<span class="question-title">' + (numPregunta + 1) + '. ' + item.a + '</span>' +
+          '<textarea id="comentario_' + idx + '" placeholder="Escribe tu comentario aquí..."></textarea>' +
+          '<div class="error-message">⚠️ Por favor, completa este campo obligatorio.</div>' +
+        '</div>';
+
+      contenedor.appendChild(section);
+      numPregunta += 2;
+    });
+
+  } catch (e) {
+    document.getElementById('main-card').style.display = 'none';
+    document.getElementById('error-link-msg').style.display = 'block';
+  }
+}
+
+// EVENTO SELECCIÓN DE ESCALA (1 AL 10)
+document.addEventListener('click', function(e) {
+  if (!e.target.classList.contains('scale-btn')) return;
+
+  var btn = e.target;
+  var idx = btn.getAttribute('data-idx');
+  var valor = parseInt(btn.getAttribute('data-valor'));
+
+  respuestasScore[idx] = valor;
+
+  var grupo = btn.parentElement.querySelectorAll('.scale-btn');
+  for (var i = 0; i < grupo.length; i++) {
+    grupo[i].classList.remove('selected');
+  }
+  btn.classList.add('selected');
+
+  var bloque = btn.closest('.q-scale-block');
+  if (bloque) {
+    var err = bloque.querySelector('.error-message');
+    if (err) err.style.display = 'none';
+  }
+});
+
+// OCULTAR ERROR AL ESCRIBIR EN TEXTAREA
+document.addEventListener('input', function(e) {
+  if (e.target.tagName !== 'TEXTAREA') return;
+  var bloque = e.target.closest('.q-open-block');
+  if (bloque && e.target.value.trim() !== '') {
+    var err = bloque.querySelector('.error-message');
+    if (err) err.style.display = 'none';
+  }
+});
+
+// EVENTO ENVIAR ENCUESTA
+document.getElementById('btn-envio').addEventListener('click', function() {
+  var errores = document.querySelectorAll('.error-message');
+  for (var i = 0; i < errores.length; i++) {
+    errores[i].style.display = 'none';
+  }
+
+  var hayErrores = false;
+
+  // Validar todas las escalas
+  document.querySelectorAll('.q-scale-block').forEach(function(bloque) {
+    var seleccionados = bloque.querySelectorAll('.scale-btn.selected').length;
+    if (seleccionados === 0) {
+      bloque.querySelector('.error-message').style.display = 'block';
+      hayErrores = true;
+    }
+  });
+
+  // Validar todas las preguntas abiertas obligatorias
+  document.querySelectorAll('.q-open-block').forEach(function(bloque) {
+    var txt = bloque.querySelector('textarea').value.trim();
+    if (txt === '') {
+      bloque.querySelector('.error-message').style.display = 'block';
+      hayErrores = true;
+    }
+  });
+
+  if (hayErrores) {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+
+  var btnEnvio = document.getElementById('btn-envio');
+  btnEnvio.disabled = true;
+  btnEnvio.innerText = 'Enviando...';
+
+  var respuestasFinales = payload.items.map(function(item, idx) {
+    return {
+      funcionalidad: item.f,
+      score: respuestasScore[idx],
+      comentario: document.getElementById('comentario_' + idx).value.trim()
+    };
+  });
+
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: payload.id,
+      respuestas: respuestasFinales
+    })
+  })
+  .then(function() {
+    document.getElementById('main-card').style.display = 'none';
+    document.getElementById('success-msg').style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  })
+  .catch(function(err) {
+    alert('Error al enviar: ' + err);
+    btnEnvio.disabled = false;
+    btnEnvio.innerText = 'Enviar Encuesta';
+  });
+});
+</script>
+</body>
+</html>
